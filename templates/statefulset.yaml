@@ -1,0 +1,32 @@
+{{- if eq .Values.workload.type "statefulset" }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "universal.fullname" . }}
+  namespace: {{ include "universal.namespace" . }}
+  labels:
+    {{- include "universal.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "universal.fullname" . }}-headless
+  replicas: {{ .Values.replicaCount }}
+  podManagementPolicy: {{ .Values.workload.podManagementPolicy }}
+  selector:
+    matchLabels:
+      {{- include "universal.selectorLabels" . | nindent 6 }}
+  updateStrategy:
+    {{- toYaml .Values.workload.updateStrategy | nindent 4 }}
+  template:
+    metadata:
+      labels:
+        {{- include "universal.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.workload.terminationGracePeriodSeconds }}
+      {{- include "universal.podSpec" . | nindent 6 }}
+{{- end }}

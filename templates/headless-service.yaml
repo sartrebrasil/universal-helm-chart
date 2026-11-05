@@ -1,0 +1,19 @@
+{{- if or .Values.headlessService.enabled (eq .Values.workload.type "statefulset") }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "universal.fullname" . }}-headless
+  namespace: {{ include "universal.namespace" . }}
+  labels:
+    {{- include "universal.labels" . | nindent 4 }}
+  {{- with .Values.headlessService.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "universal.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- toYaml .Values.service.ports | nindent 4 }}
+{{- end }}

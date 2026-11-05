@@ -1,0 +1,27 @@
+{{- if eq .Values.workload.type "daemonset" }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "universal.fullname" . }}
+  namespace: {{ include "universal.namespace" . }}
+  labels:
+    {{- include "universal.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "universal.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "universal.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.workload.terminationGracePeriodSeconds }}
+      {{- include "universal.podSpec" . | nindent 6 }}
+{{- end }}

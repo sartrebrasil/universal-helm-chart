@@ -1,0 +1,19 @@
+Release: {{ .Release.Name }}
+Namespace: {{ include "universal.namespace" . }}
+Chart: {{ .Chart.Name }} {{ .Chart.Version }}
+
+Workload type: {{ .Values.workload.type }}
+Image: {{ include "universal.image" . }}
+
+{{- if .Values.service.enabled }}
+Service: {{ include "universal.fullname" . }}
+{{- end }}
+{{- if .Values.ingress.enabled }}
+Ingress enabled.
+{{- end }}
+{{- if .Values.job.enabled }}
+Job enabled: {{ include "universal.fullname" . }}-job
+{{- end }}
+{{- if .Values.cronjob.enabled }}
+CronJob enabled: {{ include "universal.fullname" . }}-cron schedule={{ .Values.cronjob.schedule }}
+{{- end }}

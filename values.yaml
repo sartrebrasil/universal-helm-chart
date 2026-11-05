@@ -1,0 +1,256 @@
+# Universal Workload Helm Chart
+# Use este chart para APIs, workers, apps web, jobs one-shot e cronjobs.
+
+nameOverride: ""
+fullnameOverride: ""
+namespaceOverride: ""
+
+commonLabels: {}
+commonAnnotations: {}
+
+replicaCount: 2
+
+image:
+  repository: nginx
+  tag: "1.27-alpine"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+workload:
+  # deployment | statefulset | daemonset | none
+  type: deployment
+  revisionHistoryLimit: 5
+  terminationGracePeriodSeconds: 30
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+
+command: []
+args: []
+
+containerPorts:
+  - name: http
+    containerPort: 8080
+    protocol: TCP
+
+env: []
+# - name: JAVA_OPTS
+#   value: "-XX:MaxRAMPercentage=75"
+
+envFrom: []
+# - configMapRef:
+#     name: my-config
+
+configMap:
+  enabled: false
+  name: ""
+  annotations: {}
+  data: {}
+  binaryData: {}
+
+secret:
+  enabled: false
+  name: ""
+  annotations: {}
+  type: Opaque
+  stringData: {}
+  data: {}
+
+externalSecrets:
+  # Apenas template auxiliar para External Secrets Operator, se você usa ESO.
+  enabled: false
+  secretStoreRef:
+    name: cluster-secret-store
+    kind: ClusterSecretStore
+  refreshInterval: 1h
+  targetName: ""
+  data: []
+  # - secretKey: DATABASE_URL
+  #   remoteRef:
+  #     key: prod/app/database-url
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+  automountServiceAccountToken: true
+
+rbac:
+  create: false
+  rules: []
+  # - apiGroups: [""]
+  #   resources: ["pods"]
+  #   verbs: ["get", "list", "watch"]
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+service:
+  enabled: true
+  type: ClusterIP
+  annotations: {}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+
+headlessService:
+  enabled: false
+  annotations: {}
+
+probes:
+  liveness:
+    enabled: true
+    httpGet:
+      path: /health/live
+      port: http
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    httpGet:
+      path: /health/ready
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 3
+  startup:
+    enabled: false
+    httpGet:
+      path: /health/startup
+      port: http
+    failureThreshold: 30
+    periodSeconds: 5
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: null
+  behavior: {}
+
+pdb:
+  enabled: false
+  minAvailable: 1
+  maxUnavailable: null
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: app.local
+      paths:
+        - path: /
+          pathType: Prefix
+          servicePort: http
+  tls: []
+
+persistence:
+  enabled: false
+  accessModes: ["ReadWriteOnce"]
+  size: 1Gi
+  storageClassName: ""
+  annotations: {}
+  mountPath: /data
+  existingClaim: ""
+
+extraVolumes: []
+extraVolumeMounts: []
+
+initContainers: []
+sidecars: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+priorityClassName: ""
+runtimeClassName: ""
+schedulerName: ""
+hostAliases: []
+dnsConfig: {}
+dnsPolicy: ""
+
+networkPolicy:
+  enabled: false
+  ingress: []
+  egress: []
+  policyTypes:
+    - Ingress
+    - Egress
+
+job:
+  enabled: false
+  annotations: {}
+  labels: {}
+  backoffLimit: 3
+  activeDeadlineSeconds: null
+  ttlSecondsAfterFinished: 86400
+  restartPolicy: Never
+  completions: 1
+  parallelism: 1
+  command: []
+  args: []
+  env: []
+  envFrom: []
+  resources: {}
+
+cronjob:
+  enabled: false
+  schedule: "*/5 * * * *"
+  annotations: {}
+  labels: {}
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 3
+  startingDeadlineSeconds: null
+  suspend: false
+  backoffLimit: 3
+  restartPolicy: Never
+  command: []
+  args: []
+  env: []
+  envFrom: []
+  resources: {}
+
+serviceMonitor:
+  enabled: false
+  labels: {}
+  annotations: {}
+  interval: 30s
+  scrapeTimeout: 10s
+  path: /metrics
+  port: http
+
+extraObjects: []

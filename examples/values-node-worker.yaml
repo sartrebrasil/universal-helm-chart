@@ -1,0 +1,21 @@
+workload:
+  type: deployment
+service:
+  enabled: false
+image:
+  repository: ghcr.io/acme/my-node-worker
+  tag: "2.3.1"
+command: ["node"]
+args: ["dist/worker.js"]
+probes:
+  liveness:
+    enabled: false
+  readiness:
+    enabled: false
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 1
+    memory: 512Mi

@@ -1,0 +1,15 @@
+workload:
+  type: none
+service:
+  enabled: false
+cronjob:
+  enabled: true
+  schedule: "0 */2 * * *"
+  command: ["python"]
+  args: ["-m", "jobs.reconcile"]
+  env:
+    - name: LOG_LEVEL
+      value: INFO
+image:
+  repository: ghcr.io/acme/reconcile-job
+  tag: "0.9.0"

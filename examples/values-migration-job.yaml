@@ -1,0 +1,13 @@
+workload:
+  type: none
+service:
+  enabled: false
+job:
+  enabled: true
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 3600
+  command: ["/bin/sh", "-c"]
+  args: ["./migrate.sh"]
+image:
+  repository: ghcr.io/acme/db-migrations
+  tag: "2026.05.22"

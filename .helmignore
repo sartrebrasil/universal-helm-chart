@@ -1,0 +1,11 @@
+.git/
+.github/
+.idea/
+.vscode/
+*.swp
+*.tmp
+.DS_Store
+README.md
+ci/
+docs/
+examples/

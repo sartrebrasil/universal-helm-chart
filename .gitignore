@@ -1,0 +1,8 @@
+target/
+.idea/
+*.iml
+.vscode/
+dependency-reduced-pom.xml
+.DS_Store
+.devspace/
+.kube/

@@ -100,9 +100,20 @@ containers:
     env:
 {{ toYaml . | nindent 6 }}
     {{- end }}
-    {{- with .Values.envFrom }}
+    {{- /* o ConfigMap e o Secret do próprio release entram sozinhos, por último: numa chave repetida, vencem os do release */}}
+    {{- if or .Values.envFrom .Values.configMap.enabled .Values.secret.enabled }}
     envFrom:
+      {{- with .Values.envFrom }}
 {{ toYaml . | nindent 6 }}
+      {{- end }}
+      {{- if .Values.configMap.enabled }}
+      - configMapRef:
+          name: {{ include "universal.configMapName" . }}
+      {{- end }}
+      {{- if .Values.secret.enabled }}
+      - secretRef:
+          name: {{ include "universal.secretName" . }}
+      {{- end }}
     {{- end }}
     {{- if .Values.probes.liveness.enabled }}
     livenessProbe:

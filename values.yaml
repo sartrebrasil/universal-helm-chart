@@ -43,6 +43,7 @@ env: []
 # - name: JAVA_OPTS
 #   value: "-XX:MaxRAMPercentage=75"
 
+# fontes extras; o configMap e o secret deste release (abaixo), quando enabled, entram sozinhos depois destas
 envFrom: []
 # - configMapRef:
 #     name: my-config

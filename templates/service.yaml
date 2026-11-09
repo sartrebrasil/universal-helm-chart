@@ -1,4 +1,4 @@
-{{- if .Values.service.enabled }}
+{{- if and .Values.service.enabled (ne .Values.workload.type "none") }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -6,14 +6,26 @@ metadata:
   namespace: {{ include "universal.namespace" . }}
   labels:
     {{- include "universal.labels" . | nindent 4 }}
-  {{- with .Values.service.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" .Values.service.annotations) }}
+  {{- . | nindent 2 }}
   {{- end }}
 spec:
   type: {{ .Values.service.type }}
+  {{- with .Values.service.sessionAffinity }}
+  sessionAffinity: {{ . }}
+  {{- end }}
+  {{- with .Values.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ . }}
+  {{- end }}
+  {{- with .Values.service.loadBalancerClass }}
+  loadBalancerClass: {{ . }}
+  {{- end }}
+  {{- with .Values.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
-    {{- include "universal.selectorLabels" . | nindent 4 }}
+    {{- include "universal.selectorLabels" (dict "root" $ "component" "workload") | nindent 4 }}
   ports:
     {{- toYaml .Values.service.ports | nindent 4 }}
 {{- end }}

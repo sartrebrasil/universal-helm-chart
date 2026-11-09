@@ -6,10 +6,13 @@ metadata:
   namespace: {{ include "universal.namespace" . }}
   labels:
     {{- include "universal.labels" . | nindent 4 }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" nil) }}
+  {{- . | nindent 2 }}
+  {{- end }}
 spec:
   podSelector:
     matchLabels:
-      {{- include "universal.selectorLabels" . | nindent 6 }}
+      {{- include "universal.instanceLabels" . | nindent 6 }}
   policyTypes:
     {{- toYaml .Values.networkPolicy.policyTypes | nindent 4 }}
   {{- with .Values.networkPolicy.ingress }}

@@ -6,9 +6,8 @@ metadata:
   namespace: {{ include "universal.namespace" . }}
   labels:
     {{- include "universal.labels" . | nindent 4 }}
-  {{- with .Values.persistence.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" .Values.persistence.annotations) }}
+  {{- . | nindent 2 }}
   {{- end }}
 spec:
   accessModes:

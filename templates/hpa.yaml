@@ -1,4 +1,4 @@
-{{- if .Values.autoscaling.enabled }}
+{{- if and .Values.autoscaling.enabled (has .Values.workload.type (list "deployment" "statefulset")) }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -6,6 +6,9 @@ metadata:
   namespace: {{ include "universal.namespace" . }}
   labels:
     {{- include "universal.labels" . | nindent 4 }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" nil) }}
+  {{- . | nindent 2 }}
+  {{- end }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -29,6 +32,10 @@ spec:
         target:
           type: Utilization
           averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+    {{- /* métricas Pods/Object/External/ContainerResource em formato autoscaling/v2 */}}
+    {{- with .Values.autoscaling.metrics }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
   {{- with .Values.autoscaling.behavior }}
   behavior:

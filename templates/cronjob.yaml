@@ -9,9 +9,8 @@ metadata:
     {{- with .Values.cronjob.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with .Values.cronjob.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" .Values.cronjob.annotations) }}
+  {{- . | nindent 2 }}
   {{- end }}
 spec:
   schedule: {{ .Values.cronjob.schedule | quote }}
@@ -25,35 +24,23 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: {{ .Values.cronjob.backoffLimit }}
+      {{- with .Values.cronjob.ttlSecondsAfterFinished }}
+      ttlSecondsAfterFinished: {{ . }}
+      {{- end }}
+      {{- with .Values.cronjob.activeDeadlineSeconds }}
+      activeDeadlineSeconds: {{ . }}
+      {{- end }}
       template:
         metadata:
           labels:
-            {{- include "universal.selectorLabels" . | nindent 12 }}
+            {{- include "universal.selectorLabels" (dict "root" $ "component" "cron") | nindent 12 }}
+            {{- with .Values.podLabels }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with include "universal.podAnnotations" (dict "root" $ "checksums" true) }}
+          {{- . | nindent 10 }}
+          {{- end }}
         spec:
           restartPolicy: {{ .Values.cronjob.restartPolicy }}
-          serviceAccountName: {{ include "universal.serviceAccountName" . }}
-          containers:
-            - name: {{ include "universal.name" . }}-cron
-              image: {{ include "universal.image" . | quote }}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
-              {{- with .Values.cronjob.command }}
-              command:
-                {{- toYaml . | nindent 16 }}
-              {{- end }}
-              {{- with .Values.cronjob.args }}
-              args:
-                {{- toYaml . | nindent 16 }}
-              {{- end }}
-              {{- with .Values.cronjob.env }}
-              env:
-                {{- toYaml . | nindent 16 }}
-              {{- end }}
-              {{- with .Values.cronjob.envFrom }}
-              envFrom:
-                {{- toYaml . | nindent 16 }}
-              {{- end }}
-              {{- with .Values.cronjob.resources }}
-              resources:
-                {{- toYaml . | nindent 16 }}
-              {{- end }}
+          {{- include "universal.podSpec" (dict "root" $ "component" "cron" "o" .Values.cronjob) | nindent 10 }}
 {{- end }}

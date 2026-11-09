@@ -1,0 +1,31 @@
+{{- /* ConfigMap e Secret montados como arquivos (um subPath por chave); distintos do configMap/secret de envFrom */}}
+{{- if and .Values.configFiles.enabled .Values.configFiles.data }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "universal.fullname" . }}-config-files
+  namespace: {{ include "universal.namespace" . }}
+  labels:
+    {{- include "universal.labels" . | nindent 4 }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" nil) }}
+  {{- . | nindent 2 }}
+  {{- end }}
+data:
+  {{- toYaml .Values.configFiles.data | nindent 2 }}
+{{- end }}
+{{- if and .Values.configFiles.enabled .Values.configFiles.secretData }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "universal.fullname" . }}-config-files
+  namespace: {{ include "universal.namespace" . }}
+  labels:
+    {{- include "universal.labels" . | nindent 4 }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" nil) }}
+  {{- . | nindent 2 }}
+  {{- end }}
+type: Opaque
+stringData:
+  {{- toYaml .Values.configFiles.secretData | nindent 2 }}
+{{- end }}

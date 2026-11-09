@@ -8,8 +8,18 @@ Image: {{ include "universal.image" . }}
 {{- if .Values.service.enabled }}
 Service: {{ include "universal.fullname" . }}
 {{- end }}
-{{- if .Values.ingress.enabled }}
-Ingress enabled.
+{{- if .Values.ingress }}
+Ingress:
+{{- range $ing := .Values.ingress }}
+{{- range .hosts }}{{ $host := .host }}
+{{- range .paths }}
+  http{{ if $ing.tls }}s{{ end }}://{{ $host }}{{ .path }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- else if and .Values.service.enabled (eq .Values.workload.type "deployment") }}
+Acesso local:
+  kubectl --namespace {{ include "universal.namespace" . }} port-forward svc/{{ include "universal.fullname" . }} 8080:{{ (first .Values.service.ports).port }}
 {{- end }}
 {{- if .Values.job.enabled }}
 Job enabled: {{ include "universal.fullname" . }}-job

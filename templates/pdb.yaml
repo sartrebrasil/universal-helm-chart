@@ -1,4 +1,4 @@
-{{- if .Values.pdb.enabled }}
+{{- if and .Values.pdb.enabled (has .Values.workload.type (list "deployment" "statefulset")) }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -6,13 +6,19 @@ metadata:
   namespace: {{ include "universal.namespace" . }}
   labels:
     {{- include "universal.labels" . | nindent 4 }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" nil) }}
+  {{- . | nindent 2 }}
+  {{- end }}
 spec:
   selector:
     matchLabels:
-      {{- include "universal.selectorLabels" . | nindent 6 }}
+      {{- include "universal.selectorLabels" (dict "root" $ "component" "workload") | nindent 6 }}
   {{- if .Values.pdb.maxUnavailable }}
   maxUnavailable: {{ .Values.pdb.maxUnavailable }}
   {{- else }}
   minAvailable: {{ .Values.pdb.minAvailable }}
+  {{- end }}
+  {{- with .Values.pdb.unhealthyPodEvictionPolicy }}
+  unhealthyPodEvictionPolicy: {{ . }}
   {{- end }}
 {{- end }}

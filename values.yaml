@@ -11,6 +11,7 @@ commonAnnotations: {}
 replicaCount: 2
 
 image:
+  # aceita templates, ex.: 123.dkr.ecr.us-east-1.amazonaws.com/{{ .Release.Name }}
   repository: nginx
   tag: "1.27-alpine"
   pullPolicy: IfNotPresent
@@ -54,6 +55,16 @@ configMap:
   annotations: {}
   data: {}
   binaryData: {}
+
+# arquivos de config montados no container (um subPath por chave), em configFiles.path (aceita tpl).
+# data -> ConfigMap, secretData -> Secret. Alterar o conteúdo reinicia os pods (checksum).
+configFiles:
+  enabled: false
+  path: /etc/app/config
+  data: {}
+  # application.yaml: |
+  #   server.port: 8080
+  secretData: {}
 
 secret:
   enabled: false
@@ -107,6 +118,10 @@ service:
   enabled: true
   type: ClusterIP
   annotations: {}
+  sessionAffinity: ""          # None | ClientIP
+  externalTrafficPolicy: ""    # Cluster | Local (NodePort/LoadBalancer)
+  loadBalancerClass: ""
+  loadBalancerSourceRanges: []
   ports:
     - name: http
       port: 80
@@ -144,6 +159,12 @@ probes:
     failureThreshold: 30
     periodSeconds: 5
 
+# hooks postStart/preStop do container (ex.: preStop com sleep para drenar conexões)
+lifecycle: {}
+# preStop:
+#   exec:
+#     command: ["sh", "-c", "sleep 10"]
+
 resources:
   requests:
     cpu: 100m
@@ -158,24 +179,31 @@ autoscaling:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 75
   targetMemoryUtilizationPercentage: null
+  # métricas extras (Pods/Object/External/ContainerResource) no formato autoscaling/v2
+  metrics: []
   behavior: {}
 
 pdb:
   enabled: false
   minAvailable: 1
   maxUnavailable: null
+  # IfHealthyBudget | AlwaysAllow (vazio = default do cluster)
+  unhealthyPodEvictionPolicy: ""
 
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-  hosts:
-    - host: app.local
-      paths:
-        - path: /
-          pathType: Prefix
-          servicePort: http
-  tls: []
+# lista de Ingresses; vazia = nenhum. Sem `name`: o primeiro usa o fullname, os demais fullname-<índice>.
+ingress: []
+# - name: public
+#   className: nginx
+#   annotations: {}
+#   hosts:
+#     - host: app.example.com
+#       paths:
+#         - path: /
+#           pathType: Prefix      # default: Prefix
+#           servicePort: http     # default: http (nome ou número)
+#   tls:
+#     - secretName: app-tls
+#       hosts: [app.example.com]
 
 persistence:
   enabled: false
@@ -195,6 +223,9 @@ sidecars: []
 nodeSelector: {}
 tolerations: []
 affinity: {}
+# gera podAntiAffinity entre pods do workload quando `affinity` está vazio: soft | hard | "" (desligado)
+antiAffinityPreset: ""
+antiAffinityTopologyKey: kubernetes.io/hostname
 topologySpreadConstraints: []
 priorityClassName: ""
 runtimeClassName: ""
@@ -219,6 +250,14 @@ job:
   activeDeadlineSeconds: null
   ttlSecondsAfterFinished: 86400
   restartPolicy: Never
+  # Job é imutável: sem hook, `helm upgrade` com imagem nova falha enquanto o Job antigo existir.
+  # Com hook o Job é recriado a cada release. Atenção: em pre-install o ServiceAccount, o configMap e o
+  # secret do próprio release ainda não existem; use serviceAccount.create=false (ou events post-*).
+  hook:
+    enabled: false
+    events: pre-install,pre-upgrade
+    weight: 0
+    deletePolicy: before-hook-creation
   completions: 1
   parallelism: 1
   command: []
@@ -238,6 +277,8 @@ cronjob:
   startingDeadlineSeconds: null
   suspend: false
   backoffLimit: 3
+  ttlSecondsAfterFinished: null
+  activeDeadlineSeconds: null
   restartPolicy: Never
   command: []
   args: []
@@ -253,5 +294,71 @@ serviceMonitor:
   scrapeTimeout: 10s
   path: /metrics
   port: http
+  honorLabels: false
+  scheme: ""
+  tlsConfig: {}
+  relabelings: []
+  metricRelabelings: []
+  # ns onde o ServiceMonitor é criado (default: o do release); namespaceSelector default: ns do release
+  namespace: ""
+  namespaceSelector: {}
+
+# scrape direto nos pods (workers sem Service); port = nome da porta do container
+podMonitor:
+  enabled: false
+  labels: {}
+  annotations: {}
+  namespace: ""
+  interval: 30s
+  scrapeTimeout: 10s
+  path: /metrics
+  port: http
+  honorLabels: false
+  relabelings: []
+  metricRelabelings: []
+
+prometheusRule:
+  enabled: false
+  labels: {}
+  annotations: {}
+  namespace: ""
+  groups: []
+  # - name: app
+  #   rules:
+  #     - alert: HighErrorRate
+  #       expr: rate(http_requests_total{code=~"5.."}[5m]) > 1
+  #       for: 10m
+
+# Gateway API (alternativa ao Ingress); exige os CRDs gateway.networking.k8s.io
+httpRoute:
+  enabled: false
+  annotations: {}
+  parentRefs: []
+  # - name: shared-gateway
+  #   namespace: gateways
+  hostnames: []
+  rules:
+    - path: /
+      pathType: PathPrefix
+      # servicePort: 80   # número; default = primeira porta de service.ports
+      # filters: []
+
+# NodePool do Karpenter (v1beta1) dedicado a este release; os pods são amarrados a ele por nodeSelector
+karpenter:
+  enabled: false
+  nodeClassRef: default
+  limits:
+    cpu: 1000
+    memory: 1000Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+    expireAfter: 720h
+  requirements: []
+  # - key: karpenter.sh/capacity-type
+  #   operator: In
+  #   values: ["on-demand"]
+  taints: []
+  metadata: {}
 
 extraObjects: []

@@ -1,4 +1,4 @@
-{{- if or .Values.headlessService.enabled (eq .Values.workload.type "statefulset") }}
+{{- if and (or .Values.headlessService.enabled (eq .Values.workload.type "statefulset")) (ne .Values.workload.type "none") }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -6,14 +6,13 @@ metadata:
   namespace: {{ include "universal.namespace" . }}
   labels:
     {{- include "universal.labels" . | nindent 4 }}
-  {{- with .Values.headlessService.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" .Values.headlessService.annotations) }}
+  {{- . | nindent 2 }}
   {{- end }}
 spec:
   clusterIP: None
   selector:
-    {{- include "universal.selectorLabels" . | nindent 4 }}
+    {{- include "universal.selectorLabels" (dict "root" $ "component" "workload") | nindent 4 }}
   ports:
     {{- toYaml .Values.service.ports | nindent 4 }}
 {{- end }}

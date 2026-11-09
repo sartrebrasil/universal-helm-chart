@@ -1,9 +1,12 @@
 apiVersion: v2
 name: universal-workload
-version: 0.1.0
+version: 0.2.0
 appVersion: "1.0.0"
 description: Chart Helm universal para apps, APIs, workers, jobs e cronjobs multi-linguagem.
 type: application
+# EKS reporta v1.29.0-eks-xxxx (prerelease); o -0 evita a rejeição
+kubeVersion: ">=1.25.0-0"
+# TODO: preencher home, sources e icon (URL) com os valores reais do projeto
 keywords:
   - kubernetes
   - helm
@@ -12,6 +15,7 @@ keywords:
   - cronjob
   - microservice
 maintainers:
+  # TODO: substituir pelo mantenedor real (placeholder)
   - name: Platform Team
     email: platform@example.com
 annotations:

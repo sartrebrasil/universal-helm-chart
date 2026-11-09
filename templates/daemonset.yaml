@@ -6,22 +6,23 @@ metadata:
   namespace: {{ include "universal.namespace" . }}
   labels:
     {{- include "universal.labels" . | nindent 4 }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" nil) }}
+  {{- . | nindent 2 }}
+  {{- end }}
 spec:
   selector:
     matchLabels:
-      {{- include "universal.selectorLabels" . | nindent 6 }}
+      {{- include "universal.selectorLabels" (dict "root" $ "component" "workload") | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "universal.selectorLabels" . | nindent 8 }}
+        {{- include "universal.selectorLabels" (dict "root" $ "component" "workload") | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      annotations:
-        {{- with .Values.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+      {{- with include "universal.podAnnotations" (dict "root" $ "checksums" true) }}
+      {{- . | nindent 6 }}
+      {{- end }}
     spec:
-      terminationGracePeriodSeconds: {{ .Values.workload.terminationGracePeriodSeconds }}
-      {{- include "universal.podSpec" . | nindent 6 }}
+      {{- include "universal.podSpec" (dict "root" $ "component" "workload") | nindent 6 }}
 {{- end }}

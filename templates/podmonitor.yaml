@@ -1,0 +1,39 @@
+{{- /* scrape direto nos pods, para workers sem Service. port = nome da porta do container */ -}}
+{{- if .Values.podMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "universal.fullname" . }}
+  namespace: {{ default (include "universal.namespace" .) .Values.podMonitor.namespace }}
+  labels:
+    {{- include "universal.labels" . | nindent 4 }}
+    {{- with .Values.podMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" .Values.podMonitor.annotations) }}
+  {{- . | nindent 2 }}
+  {{- end }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ include "universal.namespace" . }}
+  selector:
+    matchLabels:
+      {{- include "universal.selectorLabels" (dict "root" $ "component" "workload") | nindent 6 }}
+  podMetricsEndpoints:
+    - port: {{ .Values.podMonitor.port }}
+      path: {{ .Values.podMonitor.path }}
+      interval: {{ .Values.podMonitor.interval }}
+      scrapeTimeout: {{ .Values.podMonitor.scrapeTimeout }}
+      {{- if .Values.podMonitor.honorLabels }}
+      honorLabels: true
+      {{- end }}
+      {{- with .Values.podMonitor.relabelings }}
+      relabelings:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.podMonitor.metricRelabelings }}
+      metricRelabelings:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

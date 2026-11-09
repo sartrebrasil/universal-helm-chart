@@ -6,6 +6,9 @@ metadata:
   namespace: {{ include "universal.namespace" . }}
   labels:
     {{- include "universal.labels" . | nindent 4 }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" nil) }}
+  {{- . | nindent 2 }}
+  {{- end }}
 rules:
   {{- toYaml .Values.rbac.rules | nindent 2 }}
 ---
@@ -16,6 +19,9 @@ metadata:
   namespace: {{ include "universal.namespace" . }}
   labels:
     {{- include "universal.labels" . | nindent 4 }}
+  {{- with include "universal.annotations" (dict "root" $ "extra" nil) }}
+  {{- . | nindent 2 }}
+  {{- end }}
 subjects:
   - kind: ServiceAccount
     name: {{ include "universal.serviceAccountName" . }}

@@ -26,14 +26,11 @@ probes:
       path: /actuator/health/readiness
       port: http
 ingress:
-  enabled: true
-  className: nginx
-  hosts:
-    - host: api.example.com
-      paths:
-        - path: /
-          pathType: Prefix
-          servicePort: http
+  - className: nginx
+    hosts:
+      - host: api.example.com
+        paths:
+          - path: /
 autoscaling:
   enabled: true
   minReplicas: 2
